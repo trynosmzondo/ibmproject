@@ -96,24 +96,66 @@ class Enrollment(models.Model):
 
 
 # <HINT> Create a Question Model with:
+class Question:
+    def __init__(self, question: str, correct_answer: str, choices: list):
+        self.question_text = question
+        self.correct_answer = correct_answer
+        self.choices = choices    
     # Used to persist question content for a course
     # Has a One-To-Many (or Many-To-Many if you want to reuse questions) relationship with course
     # Has a grade point for each question
     # Has question content
     # Other fields and methods you would like to design
-#class Question(models.Model):
+class Question(models.Model):
+    lesson = models.ForeignKey(Course, on_delete=models.CASCADE)
+    def __init__(self, questions):
+        self.question_no = 0
+        self.score = 0
+        self.questions = questions
+        self.current_question = None
+
+    def has_more_questions(self):
+        #To check if the quiz has more questions"""
+        
+        return self.question_no < len(self.questions)
+
+    def next_question(self):
+        #Get the next question by incrementing the question number"""
+        
+        self.current_question = self.questions[self.question_no]
+        self.question_no += 1
+        q_text = self.current_question.question_text
+        return f"Q.{self.question_no}: {q_text}"
+
+    def check_answer(self, user_answer):
+        #Check the user's answer against the correct answer and maintain the score"""
+        
+        correct_answer = self.current_question.correct_answer
+        if user_answer.lower() == correct_answer.lower():
+            self.score += 1
+            return True
+        else:
+            return False
+
+    def get_score(self):
+        #Get the number of correct answers, wrong answers, and score percentage."""
+        
+        wrong = self.question_no - self.score
+        score_percent = int(self.score / self.question_no * 100)
+        return (self.score, wrong, score_percent)
+
     # Foreign key to lesson
     # question text
     # question grade/mark
 
-    # <HINT> A sample model method to calculate if learner get the score of the question
-    #def is_get_score(self, selected_ids):
-    #    all_answers = self.choice_set.filter(is_correct=True).count()
-    #    selected_correct = self.choice_set.filter(is_correct=True, id__in=selected_ids).count()
-    #    if all_answers == selected_correct:
-    #        return True
-    #    else:
-    #        return False
+    # <HINt>A sample model method to calculate if learner get the score of the question
+    def is_get_score(self, selected_ids):
+        all_answers = self.choice_set.filter(is_correct=True).count()
+        selected_correct = self.choice_set.filter(is_correct=True, id__in=selected_ids).count()
+        if all_answers == selected_correct:
+            return True
+        else:
+            return False
 
 
 #  <HINT> Create a Choice Model with:
@@ -128,7 +170,7 @@ class Enrollment(models.Model):
 # One enrollment could have multiple submission
 # One submission could have multiple choices
 # One choice could belong to multiple submissions
-#class Submission(models.Model):
-#    enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE)
-#    chocies = models.ManyToManyField(Choice)
-#    Other fields and methods you would like to design
+class Submission(models.Model):
+    enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE)
+    chocies = models.ManyToManyField(Choice)
+    Other fields and methods you would like to design
